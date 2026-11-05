@@ -6,6 +6,9 @@ ROOT_DIR = Path(__file__).resolve().parent
 DATA_DIR = ROOT_DIR / "data"
 CACHE_DIR = DATA_DIR / "cache"
 PAGES_DIR = DATA_DIR / "pages"
+INPUT_PDFS_DIR = DATA_DIR / "input_pdfs"
+OUTPUT_DIR = DATA_DIR / "output"
+CHECKPOINT_PATH = DATA_DIR / "checkpoints.sqlite"
 
 MAX_PDF_BYTES = int(os.getenv("MAX_PDF_BYTES", 25 * 1024 * 1024))
 MAX_PDF_PAGES = int(os.getenv("MAX_PDF_PAGES", 30))
@@ -26,3 +29,8 @@ PROVIDER_RATE_LIMIT_SECONDS = {
 }
 MAX_RETRIES = int(os.getenv("LLM_MAX_RETRIES", "3"))
 BACKOFF_SECONDS = float(os.getenv("LLM_BACKOFF_SECONDS", "1"))
+
+# Graph safeguards. A high variance may receive bounded re-scoring before it is
+# explicitly sent to human review.
+SCORE_VARIANCE_THRESHOLD = float(os.getenv("SCORE_VARIANCE_THRESHOLD", "1.5"))
+MAX_SCORE_RETRIES = int(os.getenv("MAX_SCORE_RETRIES", "2"))
