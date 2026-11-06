@@ -1,0 +1,66 @@
+version: 1
+scale_min: 1
+scale_max: 5
+weights_locked: false
+weights_sign_off: pending
+
+criteria:
+  novelty:
+    weight: 0.20
+    description: >-
+      How original the idea is relative to common hackathon solutions,
+      independent of track.
+    levels:
+      1: Derivative of a well-known demo with no meaningful twist.
+      2: Familiar idea with a minor tweak that does not change the approach.
+      3: Clear angle or combination that is somewhat uncommon for the problem.
+      4: Distinct approach or insight that stands out among similar decks.
+      5: Genuinely uncommon idea with a sharp, defensible differentiator.
+
+  feasibility:
+    weight: 0.20
+    description: >-
+      Whether the team can realistically build a credible version in a
+      hackathon timeframe with the stated skills and scope.
+    levels:
+      1: Scope or dependencies make a working demo unrealistic.
+      2: Major gaps in plan, skills, or timeline; high delivery risk.
+      3: Achievable core demo if the team focuses; some open risks.
+      4: Credible plan, suitable stack, and clear path to a working demo.
+      5: Tight scope, realistic plan, and strong evidence they can ship it.
+
+  technical_depth:
+    weight: 0.25
+    description: >-
+      Substance of the technical design: architecture, stack choices,
+      and engineering thought beyond surface UI or slides.
+    levels:
+      1: Almost no technical content; buzzwords without a real design.
+      2: Thin stack mention; little architecture or implementation detail.
+      3: Coherent stack and basic architecture with some concrete choices.
+      4: Solid design with clear components, data flow, or non-trivial tech.
+      5: Deep, specific engineering with trade-offs and implementation insight.
+
+  impact:
+    weight: 0.20
+    description: >-
+      Potential value for the stated users or problem if the project works,
+      judged from the deck alone across tracks.
+    levels:
+      1: Problem or benefit is unclear or negligible.
+      2: Narrow or weakly motivated impact; users barely defined.
+      3: Plausible benefit for a real user group if it works.
+      4: Clear, meaningful impact with a well-framed problem and audience.
+      5: High-stakes or broad value with a compelling, well-supported case.
+
+  evidence:
+    weight: 0.15
+    description: >-
+      Strength of proof in the deck: demos, metrics, screenshots, or other
+      artifacts that back claims (not just asserted results).
+    levels:
+      1: Claims with no supporting slides, demo, or artifacts.
+      2: Weak or vague support; mostly assertions.
+      3: Some concrete evidence (screenshot, prototype note, limited metric).
+      4: Solid demo or data that meaningfully backs the main claims.
+      5: Strong, specific evidence tightly linked to the claimed results.

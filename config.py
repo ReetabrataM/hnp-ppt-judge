@@ -26,3 +26,8 @@ PROVIDER_RATE_LIMIT_SECONDS = {
 }
 MAX_RETRIES = int(os.getenv("LLM_MAX_RETRIES", "3"))
 BACKOFF_SECONDS = float(os.getenv("LLM_BACKOFF_SECONDS", "1"))
+
+SCORE_RUNS = int(os.getenv("SCORE_RUNS", "3"))
+SCORE_VARIANCE_THRESHOLD = float(os.getenv("SCORE_VARIANCE_THRESHOLD", "0.75"))
+SCORE_MAX_ATTEMPTS = int(os.getenv("SCORE_MAX_ATTEMPTS", "2"))
+RUBRIC_PATH = Path(os.getenv("RUBRIC_PATH", str(ROOT_DIR / "rubric" / "rubric.yaml")))
