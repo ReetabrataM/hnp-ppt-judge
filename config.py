@@ -15,11 +15,12 @@ MAX_PDF_PAGES = int(os.getenv("MAX_PDF_PAGES", 30))
 MIN_VISIBLE_FONT_SIZE = float(os.getenv("MIN_VISIBLE_FONT_SIZE", "3"))
 TEXTLESS_CHARACTER_LIMIT = int(os.getenv("TEXTLESS_CHARACTER_LIMIT", "30"))
 RENDER_DPI = int(os.getenv("RENDER_DPI", "200"))
+VISION_TIMEOUT_SECONDS = float(os.getenv("VISION_TIMEOUT_SECONDS", "15"))
 
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
 GEMINI_VISION_MODEL = os.getenv("GEMINI_VISION_MODEL", GEMINI_MODEL)
-GEMINI_EMBEDDING_MODEL = os.getenv("GEMINI_EMBEDDING_MODEL", "text-embedding-004")
-GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+GEMINI_EMBEDDING_MODEL = os.getenv("GEMINI_EMBEDDING_MODEL", "gemini-embedding-001")
+GROQ_MODEL = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
 GROQ_VISION_MODEL = os.getenv("GROQ_VISION_MODEL", "meta-llama/llama-4-scout-17b-16e-instruct")
 
 # Minimum spacing between starts of requests to the same provider.

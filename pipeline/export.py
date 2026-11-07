@@ -72,7 +72,10 @@ def _rows_for_state(
     profile = dict(state.get("profile", {}))
     scores = dict(state.get("scores", {}))
 
-    criteria = scores.get("criteria", {})
+    # Issue #4 stores the criterion map directly in ``state['scores']`` and
+    # aggregate values on state. Older callers provide ``scores['criteria']``.
+    # Accept both shapes while the project stages are integrated incrementally.
+    criteria = scores.get("criteria", scores)
     if not isinstance(criteria, dict):
         criteria = {}
 
@@ -92,9 +95,9 @@ def _rows_for_state(
         "deck_name": state.get("deck_name"),
         "status": state.get("stage", "complete"),
         "page_count": state.get("page_count"),
-        "weighted_total_10": scores.get("weighted_total"),
-        "confidence": scores.get("confidence", "low"),
-        "score_variance": state.get("score_variance", 0.0),
+        "weighted_total_10": state.get("weighted_total", scores.get("weighted_total")),
+        "confidence": state.get("confidence", scores.get("confidence", "low")),
+        "score_variance": state.get("score_max_variance", state.get("score_variance", 0.0)),
         "rank": None,
         "metric_rank": None,
         "flags": "",
@@ -116,9 +119,7 @@ def _rows_for_state(
 
         score = dict(item) if isinstance(item, dict) else {}
 
-        evidence = _list(
-            score.get("evidence_slides", evidence_fallback)
-        )
+        evidence = _list(score.get("evidence_slides", score.get("slides", evidence_fallback)))
 
         reason = str(
             score.get("reason")
@@ -149,7 +150,7 @@ def _rows_for_state(
             "deck_name": state.get("deck_name"),
             "criterion": criterion,
             "score_10": score.get("score"),
-            "criterion_stdev": score.get("stdev"),
+            "criterion_stdev": score.get("stdev", (state.get("score_variance") or {}).get(criterion) if isinstance(state.get("score_variance"), dict) else None),
             "weight": score.get("weight"),
             "weighted_contribution": _weighted(score),
             "reason": reason,

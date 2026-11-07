@@ -49,7 +49,9 @@ def build_profile(state: dict[str, Any]) -> dict[str, Any]:
     request = (prompt + "\nRequired schema:\n" + json.dumps(PROFILE_SCHEMA) + "\nDeck evidence follows:\n" +
                untrusted_deck_content(json.dumps(source, ensure_ascii=False)))
     try:
-        profile = validate_profile(text_completion(request, json_output=True), state.get("page_count"))
+        # Profile extraction is text-only. Use Groq directly so a temporary
+        # Gemini vision/capacity outage does not block the whole deck batch.
+        profile = validate_profile(text_completion(request, json_output=True, provider="groq"), state.get("page_count"))
     except Exception as exc:
         return add_flag(state, "profile_failed", f"Profile extraction/validation failed: {exc}", severity="error")
     return updated(state, profile=profile, profile_valid=True)

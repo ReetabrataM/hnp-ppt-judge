@@ -15,10 +15,32 @@ import config
 logger = logging.getLogger(__name__)
 _last_request: dict[str, float] = {}
 _lock = threading.Lock()
+_gemini_client_instance: Any | None = None
 
 
 class LLMError(RuntimeError): pass
 class MalformedOutputError(LLMError): pass
+
+
+def _gemini_client() -> Any:
+    """Return one process-long client; the SDK closes transient clients on GC."""
+    global _gemini_client_instance
+    with _lock:
+        if _gemini_client_instance is None:
+            from google import genai
+            _gemini_client_instance = genai.Client()
+        return _gemini_client_instance
+
+
+def _gemini_request_config() -> Any:
+    """Keep SDK retries bounded; wrapper-level retry/fallback owns policy."""
+    from google.genai import types
+    return types.GenerateContentConfig(
+        http_options=types.HttpOptions(
+            timeout=20_000,
+            retry_options=types.HttpRetryOptions(attempts=1),
+        )
+    )
 
 
 def untrusted_deck_content(content: str) -> str:
@@ -96,14 +118,14 @@ def _run(provider: str, call: Callable[[], Any]) -> Any:
 
 
 def _gemini_text(model: str, prompt: str) -> str:
-    from google import genai
-    response = _run("gemini", lambda: genai.Client().models.generate_content(model=model, contents=prompt))
+    response = _run("gemini", lambda: _gemini_client().models.generate_content(model=model, contents=prompt, config=_gemini_request_config()))
     return response.text or ""
 
 
 def _groq_text(model: str, prompt: str) -> str:
     from groq import Groq
-    response = _run("groq", lambda: Groq().chat.completions.create(model=model, messages=[{"role": "user", "content": prompt}]))
+    client = Groq(max_retries=0, timeout=30.0)
+    response = _run("groq", lambda: client.chat.completions.create(model=model, messages=[{"role": "user", "content": prompt}]))
     return response.choices[0].message.content or ""
 
 
@@ -119,9 +141,11 @@ def text_completion(prompt: str, *, model: str | None = None, json_output: bool 
         value = _gemini_text(model, prompt) if provider == "gemini" else _groq_text(model, prompt)
         answered_by = provider
     except Exception as exc:
-        if provider != "gemini" or not _is_rate_limited(exc):
+        # Free-tier Gemini capacity outages (503) are transient just like a
+        # rate limit for the purpose of a text-only Groq fallback.
+        if provider != "gemini" or not _is_transient(exc):
             raise LLMError(f"{provider} completion failed: {exc}") from exc
-        logger.warning("Gemini rate-limited; falling back to Groq")
+        logger.warning("Gemini unavailable; falling back to Groq")
         value, answered_by = _groq_text(config.GROQ_MODEL, prompt), "groq"
     logger.info("LLM answered by %s", answered_by)
     result = parse_json_output(value) if json_output else value
@@ -141,8 +165,9 @@ def vision_completion(image_path: str | Path, prompt: str, *, model: str | None 
         return cached
     safe_prompt = untrusted_deck_content(prompt)
     try:
-        from google import genai
-        response = _run("gemini", lambda: genai.Client().models.generate_content(model=model, contents=[safe_prompt, {"mime_type": "image/png", "data": raw}]))
+        from google.genai import types
+        image = types.Part.from_bytes(data=raw, mime_type="image/png")
+        response = _run("gemini", lambda: _gemini_client().models.generate_content(model=model, contents=[safe_prompt, image], config=_gemini_request_config()))
         value, answered_by = response.text or "", "gemini"
     except Exception as exc:
         if not _is_rate_limited(exc):
@@ -150,7 +175,8 @@ def vision_completion(image_path: str | Path, prompt: str, *, model: str | None 
         logger.warning("Gemini vision rate-limited; falling back to Groq")
         from groq import Groq
         encoded = base64.b64encode(raw).decode("ascii")
-        response = _run("groq", lambda: Groq().chat.completions.create(model=config.GROQ_VISION_MODEL, messages=[{"role": "user", "content": [{"type": "text", "text": safe_prompt}, {"type": "image_url", "image_url": {"url": "data:image/png;base64," + encoded}}]}]))
+        client = Groq(max_retries=0, timeout=30.0)
+        response = _run("groq", lambda: client.chat.completions.create(model=config.GROQ_VISION_MODEL, messages=[{"role": "user", "content": [{"type": "text", "text": safe_prompt}, {"type": "image_url", "image_url": {"url": "data:image/png;base64," + encoded}}]}]))
         value, answered_by = response.choices[0].message.content or "", "groq"
     logger.info("Vision answered by %s", answered_by)
     result = parse_json_output(value) if json_output else value
@@ -165,8 +191,7 @@ def embeddings(texts: list[str], *, model: str | None = None) -> list[list[float
     if cached is not None:
         return cached
     try:
-        from google import genai
-        response = _run("gemini", lambda: genai.Client().models.embed_content(model=model, contents=texts))
+        response = _run("gemini", lambda: _gemini_client().models.embed_content(model=model, contents=texts))
         value = [item.values for item in response.embeddings]
     except Exception as exc:
         raise LLMError(f"gemini embeddings failed: {exc}") from exc
