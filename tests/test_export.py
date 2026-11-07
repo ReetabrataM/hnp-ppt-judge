@@ -53,10 +53,24 @@ def test_export_has_required_columns_evidence_and_excel_bom(tmp_path: Path) -> N
     summary = pd.read_csv(paths["summary"], encoding="utf-8-sig")
     details = pd.read_csv(paths["details"], encoding="utf-8-sig")
     assert {"team", "team_name", "weighted_total_10", "rank", "flags", "confidence", "needs_human_review"} <= set(summary.columns)
-    assert {"reason", "strengths", "weaknesses", "evidence_slides"} <= set(details.columns)
+    assert {"reason", "strengths", "weaknesses", "evidence_slides", "deck_summary"} <= set(details.columns)
     assert summary.loc[0, "team_name"] == "প্রগতি"
     assert details["reason"].notna().all()
     assert all(json.loads(value) for value in details["evidence_slides"])
+    assert details["deck_summary"].str.split().str.len().le(50).all()
+
+
+def test_export_limits_profile_summary_to_fifty_words(tmp_path: Path) -> None:
+    state = deck("deck-1", "Alpha", 7.2)
+    state["profile"].update({
+        "problem": {"value": "problem " * 30, "slides": [1]},
+        "solution": {"value": "solution " * 30, "slides": [2]},
+        "target_users": {"value": "students", "slides": [1]},
+    })
+    paths = export_results([state], output_dir=tmp_path)
+    details = pd.read_csv(paths["details"], encoding="utf-8-sig")
+    assert details.loc[0, "deck_summary"].split()[-1].endswith("…")
+    assert len(details.loc[0, "deck_summary"].split()) == 50
 
 
 def test_merge_removes_duplicate_decks_and_recalculates_rank(tmp_path: Path) -> None:

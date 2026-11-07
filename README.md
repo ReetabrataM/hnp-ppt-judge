@@ -136,7 +136,8 @@ GROQ_API_KEY=your_key_here
    ```
 3. Find the results in `data/output/`:
    - `summary.csv`: scores, aggregates, rank, flags, confidence, needs-human-review
-   - `details.csv`: justifications, strengths and weaknesses, evidence slide numbers
+   - `details.csv`: a brief (maximum 50-word) deck summary, criterion justifications,
+     strengths and weaknesses, and evidence slide numbers
 
 CSVs are saved with `utf-8-sig` encoding so Excel opens special characters correctly.
 

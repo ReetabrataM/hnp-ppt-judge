@@ -93,7 +93,13 @@ def _is_rate_limited(error: Exception) -> bool:
 
 def _is_transient(error: Exception) -> bool:
     text = str(error).lower()
-    return _is_rate_limited(error) or any(token in text for token in ("timeout", "temporar", "503", "502", "connection"))
+    return _is_rate_limited(error) or any(
+        token in text
+        for token in (
+            "timeout", "deadline exceeded", "deadline_exceeded", "temporar",
+            "504", "503", "502", "connection", "internal",
+        )
+    )
 
 
 def _wait_for_provider(provider: str) -> None:

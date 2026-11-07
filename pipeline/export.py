@@ -46,6 +46,47 @@ def _weighted(score: dict[str, Any]) -> float | None:
         return None
 
 
+def _profile_value(profile: dict[str, Any], field: str) -> str:
+    """Return a compact, display-safe profile value without inventing facts."""
+
+    raw = profile.get(field, {})
+    value = raw.get("value") if isinstance(raw, dict) else raw
+    if value in (None, "", [], {}, "not stated"):
+        return "not stated"
+    if isinstance(value, (list, dict)):
+        value = json.dumps(value, ensure_ascii=False)
+    return " ".join(str(value).split())
+
+
+def _brief_deck_summary(profile: dict[str, Any], *, maximum_words: int = 50) -> str:
+    """Build an evidence-only participant description capped at ``maximum_words``.
+
+    This is deliberately deterministic: exports should not make another model call
+    or spend API quota simply to add a spreadsheet-friendly description.
+    """
+
+    phrases: list[str] = []
+    problem = _profile_value(profile, "problem")
+    users = _profile_value(profile, "target_users")
+    solution = _profile_value(profile, "solution")
+    stack = _profile_value(profile, "tech_stack")
+
+    if problem != "not stated":
+        phrases.append(f"Addresses {problem}")
+    if users != "not stated":
+        phrases.append(f"for {users}")
+    if solution != "not stated":
+        phrases.append(f"using {solution}")
+    if stack != "not stated":
+        phrases.append(f"Tech: {stack}")
+
+    summary = ". ".join(phrases) if phrases else "Deck summary not stated."
+    words = summary.split()
+    if len(words) <= maximum_words:
+        return summary
+    return " ".join(words[:maximum_words]).rstrip(".,;:") + "…"
+
+
 def _rank_summary(rows: list[dict[str, Any]]) -> None:
     ranked = [
         row for row in rows
@@ -87,6 +128,7 @@ def _rows_for_state(
 
     evidence_fallback = _list(profile.get("evidence_slides", []))
     team_name = _team_name(state)
+    deck_summary = _brief_deck_summary(profile)
 
     summary: dict[str, Any] = {
         "deck_id": state.get("deck_id"),
@@ -148,6 +190,7 @@ def _rows_for_state(
             "team": team_name,
             "team_name": team_name,
             "deck_name": state.get("deck_name"),
+            "deck_summary": deck_summary,
             "criterion": criterion,
             "score_10": score.get("score"),
             "criterion_stdev": score.get("stdev", (state.get("score_variance") or {}).get(criterion) if isinstance(state.get("score_variance"), dict) else None),
