@@ -70,25 +70,21 @@ def score_node(state: BatchState) -> BatchState:
 
 def _needs_score_retry(state: BatchState) -> str:
     for deck in state.get("decks", []):
-        variance = deck.get("score_variance")
-        attempts = int(deck.get("score_attempts", 0))
-        if isinstance(variance, (int, float)) and variance > config.SCORE_VARIANCE_THRESHOLD:
-            if attempts < config.MAX_SCORE_RETRIES:
-                return "score"
+        # score_deck owns the variance calculation and exposes a bounded
+        # ``rescore`` signal. The graph only routes it back to score.
+        if deck.get("rescore"):
+            return "score"
     return "compare"
 
 
 def _mark_score_retry(state: BatchState) -> BatchState:
     decks: list[dict[str, Any]] = []
     for deck in state.get("decks", []):
-        variance = deck.get("score_variance")
-        attempts = int(deck.get("score_attempts", 0))
-        if isinstance(variance, (int, float)) and variance > config.SCORE_VARIANCE_THRESHOLD:
-            attempts += 1
-            deck = updated(deck, score_attempts=attempts)
-            if attempts >= config.MAX_SCORE_RETRIES:
-                deck = add_flag(deck, "high_score_variance", "Score variance remained high after retries; human review required.", severity="warning")
-                deck = updated(deck, needs_human_review=True)
+        # score_deck increments score_attempt and sets needs_human_review when
+        # the configured limit is exhausted. Preserve that state in the
+        # checkpoint without duplicating scoring policy in the graph.
+        if deck.get("rescore"):
+            deck = updated(deck, score_attempts=int(deck.get("score_attempt", 0)))
         decks.append(deck)
     return updated(state, decks=decks)
 
