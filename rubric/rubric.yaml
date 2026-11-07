@@ -5,8 +5,22 @@ weights_locked: false
 weights_sign_off: pending
 
 criteria:
-  novelty:
+  problem_fit:
     weight: 0.20
+    description: >-
+      How directly the proposed solution addresses the selected track's problem
+      statement, required capabilities, and stated constraints. For open tracks,
+      assess fit to the track's product and business brief. Do not award points
+      for requirements that are merely claimed; require deck evidence.
+    levels:
+      1: Does not address the selected problem or misses its core requirement.
+      2: Related idea, but key requirements or constraints are absent or contradicted.
+      3: Addresses the core problem with partial coverage of stated requirements.
+      4: Clearly addresses the problem and most required capabilities with credible detail.
+      5: Direct, well-evidenced coverage of the problem, requirements, and constraints.
+
+  novelty:
+    weight: 0.15
     description: >-
       How original the idea is relative to common hackathon solutions,
       independent of track.
@@ -18,7 +32,7 @@ criteria:
       5: Genuinely uncommon idea with a sharp, defensible differentiator.
 
   feasibility:
-    weight: 0.20
+    weight: 0.15
     description: >-
       Whether the team can realistically build a credible version in a
       hackathon timeframe with the stated skills and scope.
@@ -30,7 +44,7 @@ criteria:
       5: Tight scope, realistic plan, and strong evidence they can ship it.
 
   technical_depth:
-    weight: 0.25
+    weight: 0.20
     description: >-
       Substance of the technical design: architecture, stack choices,
       and engineering thought beyond surface UI or slides.
@@ -42,7 +56,7 @@ criteria:
       5: Deep, specific engineering with trade-offs and implementation insight.
 
   impact:
-    weight: 0.20
+    weight: 0.15
     description: >-
       Potential value for the stated users or problem if the project works,
       judged from the deck alone across tracks.
@@ -64,3 +78,62 @@ criteria:
       3: Some concrete evidence (screenshot, prototype note, limited metric).
       4: Solid demo or data that meaningfully backs the main claims.
       5: Strong, specific evidence tightly linked to the claimed results.
+
+# Use the team's declared track from its deck/profile. If it is not clear, do
+# not guess a statement: score only evidence-supported fit and note ambiguity.
+track_requirements:
+  web_app_dev:
+    aliases: ["web/app dev", "web app", "web", "app dev"]
+    brief: >-
+      Build a working product for a real, self-identified problem; prioritize a
+      running prototype over a polished mock-up. Explain the target user,
+      differentiation, monetisation/scaling path, and go-to-market route.
+  open_innovation:
+    aliases: ["open innovation", "open"]
+    brief: >-
+      Any domain or technology is eligible, but the solution should tackle a
+      real problem for a target user, include a credible revenue and growth
+      story, and support ambitious, unconventional thinking with a credible plan.
+  game_development:
+    aliases: ["game development", "game dev", "game"]
+    brief: >-
+      Build a playable game with a clear commercial angle, defined audience,
+      believable revenue path, and broad appeal. Properly license third-party
+      assets; original assets earn extra credit but are not mandatory.
+  cybersecurity_rogue_ai_agents:
+    aliases: ["cybersecurity", "rogue ai agents", "bank security"]
+    brief: >-
+      Design a security layer between AI agents and bank systems that enforces
+      customer authorization and detects/stops compromised or misbehaving agents.
+      Address at least two of: scoped, revocable delegation; agent identity and
+      authentication; behavioural anomaly detection; human-in-the-loop escalation;
+      tamper-evident audit trail.
+  web3_academic_credentials:
+    aliases: ["web3", "academic credentials", "credentials"]
+    brief: >-
+      Build a decentralised academic credential system: institutions issue
+      tamper-proof credentials controlled by students; any verifier can confirm
+      one instantly. Include issuance, instant QR/link verification, and
+      revocation. Selective disclosure is a bonus. Use testnet only and do not
+      store personal data on-chain in plaintext.
+  generative_ai_foley:
+    aliases: ["generative ai", "foley", "sound physics"]
+    brief: >-
+      From silent video or 3D animation, generate physically accurate, precisely
+      timed Foley sound. Cover vision-to-audio analysis of material/environment/
+      events, generative context-aware audio rather than a soundboard, frame-level
+      synchronisation, and a creator UI for upload, adjustment, and export.
+  agentic_ai_red_tape:
+    aliases: ["agentic ai", "red tape", "bureaucracy"]
+    brief: >-
+      Build an autonomous legal-administrative assistant that researches current
+      local regulations, obtains correct forms, interviews users for missing
+      details, fills forms or portals, and presents a final transparency/review
+      checkpoint for user sign-off before submission.
+  edge_thermal_threat_detection:
+    aliases: ["data science", "ai infra", "thermal threat", "edge"]
+    brief: >-
+      Build edge-optimised thermal anomaly/threat detection on resource-constrained
+      hardware such as ESP32: lightweight local inference, real-time processing of
+      thermal arrays, low-latency alerts/telemetry rather than raw images, and a
+      central dashboard for health, threat, and log data.

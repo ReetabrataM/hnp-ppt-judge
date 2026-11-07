@@ -18,13 +18,16 @@ from pipeline.score import (
 )
 
 
-CRITERIA = ("novelty", "feasibility", "technical_depth", "impact", "evidence")
+CRITERIA = ("problem_fit", "novelty", "feasibility", "technical_depth", "impact", "evidence")
 
 
 def _run(scores: list[int], *, reason: str = "ok", slides: list[int] | None = None) -> dict:
     slides = slides if slides is not None else [1]
+    # Older test fixtures supplied scores for the five pre-problem-fit criteria.
+    # Reuse the first score for problem_fit while preserving those criterion values.
+    values = [scores[0], *scores] if len(scores) == len(CRITERIA) - 1 else scores
     return {
-        name: {"score": scores[i], "reason": f"{reason}-{name}", "slides": list(slides)}
+        name: {"score": values[i], "reason": f"{reason}-{name}", "slides": list(slides)}
         for i, name in enumerate(CRITERIA)
     }
 
@@ -43,6 +46,7 @@ def test_rubric_file_loads_and_weights_sum_to_one(rubric):
         levels = {int(k) for k in spec["levels"]}
         assert levels == {1, 2, 3, 4, 5}
         assert spec["description"]
+    assert {"cybersecurity_rogue_ai_agents", "web3_academic_credentials", "generative_ai_foley", "agentic_ai_red_tape", "edge_thermal_threat_detection"} <= set(rubric["track_requirements"])
 
 
 def test_rubric_rejects_bad_weights(tmp_path: Path):
@@ -128,6 +132,7 @@ def test_prompt_includes_rubric_evidence_and_no_winner_language(rubric):
     )
     assert "novelty" in prompt
     assert "UNTRUSTED_DECK_CONTENT" in prompt
+    assert "track_requirements" in prompt
     assert "queues" in prompt
     lower = prompt.lower()
     assert "winner" in lower or "do not rank" in lower or "declare a winner" in lower
